@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RunnerPro - Sua Corrida Ao Vivo</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-shell">
+        <header class="app-header">
+            <span class="time-sim">9:41</span>
+            <h1 class="app-title">Sua Corrida - Ao Vivo</h1>
+            <div class="status-group">
+                <span class="icon-signal">📶</span>
+                <span class="gps-status" id="gpsStatus">Aguardando GPS...</span>
+            </div>
+        </header>
+
+        <main class="app-content">
+            
+            <section class="card card-highlight">
+                <div class="card-header">
+                    <h2 class="card-label">Distância Percorrida</h2>
+                </div>
+                <div class="dist-container">
+                    <span class="dist-value" id="distValue">0.00</span>
+                    <span class="dist-unit">km</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="runChart"></canvas>
+                    <div class="chart-labels">
+                        <span>00:00</span>
+                        <span id="currentTimeLabel">00:00</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="stats-grid">
+                <div class="card stat-card">
+                    <span class="stat-icon">⏱️</span>
+                    <span class="stat-label">Tempo</span>
+                    <span class="stat-value" id="timeValue">00:00:00</span>
+                </div>
+                <div class="card stat-card">
+                    <span class="stat-icon">⚡</span>
+                    <span class="stat-label">Ritmo Médio</span>
+                    <span class="stat-value" id="paceValue">0'00"</span>
+                    <span class="stat-unit">min/km</span>
+                </div>
+                <div class="card stat-card">
+                    <span class="stat-icon">🔥</span>
+                    <span class="stat-label">Calorias</span>
+                    <span class="stat-value" id="caloValue">0</span>
+                    <span class="stat-unit">kcal</span>
+                </div>
+            </section>
+
+            <section class="card card-map">
+                <h2 class="card-label overlay-label">Mapa do Percurso</h2>
+                <div id="map"></div>
+            </section>
+        </main>
+
+        <footer class="app-actions">
+            <button class="btn btn-primary" id="btnAction">
+                <span class="icon-pause">⏸️</span> Pausar Atividade
+            </button>
+            <button class="btn btn-secondary">Ver Detalhes</button>
+        </footer>
+
+        <nav class="app-nav">
+            <a href="#" class="nav-item active">🔄 Resumo</a>
+            <a href="#" class="nav-item">🛤️ Percurso</a>
+            <a href="#" class="nav-item">👤 Perfil</a>
+        </nav>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="script.js"></script>
+</body>
+</html>

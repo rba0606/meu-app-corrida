@@ -1,0 +1,226 @@
+/* Configurações Globais e Cores (Tema Claro/Escuro) */
+:root {
+    --bg-color: #f4f4f7;
+    --card-bg: #ffffff;
+    --text-primary: #1c1c1e;
+    --text-secondary: #8e8e93;
+    --action-primary: #007aff;
+    --action-secondary: #e5e5ea;
+    --highlight-grad: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+    --shadow-card: 0 8px 24px rgba(0,0,0,0.08);
+    --border-radius: 20px;
+    --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #121212;
+        --card-bg: #1c1c1e;
+        --text-primary: #ffffff;
+        --text-secondary: #a1a1a6;
+        --action-secondary: #2c2c2e;
+        --shadow-card: 0 8px 32px rgba(0,0,0,0.3);
+    }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+
+body {
+    font-family: var(--font-stack);
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    overflow: hidden; /* Prevent body scroll, use app-content instead */
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+}
+
+/* Container Principal (Simula o telefone) */
+.app-shell {
+    background-color: var(--bg-color);
+    width: 100%;
+    max-width: 430px; /* Largura Pro Max */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* Header */
+.app-header {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--bg-color);
+    z-index: 10;
+}
+
+.time-sim { font-weight: 600; font-size: 0.9rem; }
+.app-title { font-size: 1.1rem; font-weight: 700; }
+.status-group { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; color: var(--text-secondary); }
+.gps-status { color: #32d74b; font-weight: 600; }
+
+/* Conteúdo com Scroll */
+.app-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 20px 120px 20px; /* Padding bottom for footer space */
+}
+
+/* Cartões Genéricos */
+.card {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: var(--shadow-card);
+}
+
+.card-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+/* Card Destaque (Distância) */
+.card-highlight {
+    background: var(--highlight-grad);
+    color: #000;
+}
+
+.card-highlight .card-label { color: rgba(0,0,0,0.6); }
+
+.dist-container {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 10px;
+}
+
+.dist-value { font-size: 4rem; font-weight: 800; line-height: 1; }
+.dist-unit { font-size: 1.2rem; font-weight: 600; margin-left: 5px; opacity: 0.7; }
+
+/* Área do Gráfico */
+.chart-container { height: 80px; position: relative; margin-top: 15px; }
+.chart-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: rgba(0,0,0,0.5);
+    margin-top: 5px;
+}
+
+/* Grid de Estatísticas */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.stat-card {
+    padding: 15px 10px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-icon { font-size: 1.2rem; margin-bottom: 5px; }
+.stat-label { font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 2px; }
+.stat-value { font-size: 1.1rem; font-weight: 700; }
+.stat-unit { font-size: 0.7rem; color: var(--text-secondary); }
+
+/* Card do Mapa */
+.card-map {
+    padding: 0;
+    overflow: hidden;
+    height: 250px;
+    position: relative;
+    border: 2px solid var(--card-bg); /* Cria a borda da imagem */
+}
+
+#map { height: 100%; width: 100%; z-index: 1; }
+
+.overlay-label {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background-color: rgba(28, 28, 30, 0.8);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 10px;
+    z-index: 2;
+    margin: 0;
+}
+
+/* Ações Inferiores */
+.app-actions {
+    position: absolute;
+    bottom: 65px; /* Acima da nav */
+    left: 0;
+    width: 100%;
+    padding: 15px 20px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 10px;
+    background-color: rgba(var(--bg-color), 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 5;
+}
+
+.btn {
+    border: none;
+    padding: 15px;
+    border-radius: 15px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s;
+}
+
+.btn:active { transform: scale(0.98); }
+
+.btn-primary {
+    background-color: var(--action-primary);
+    color: white;
+}
+
+.btn-secondary {
+    background-color: var(--action-secondary);
+    color: var(--text-primary);
+}
+
+/* Navegação Inferior */
+.app-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 65px;
+    background-color: var(--card-bg);
+    border-top: 1px solid var(--action-secondary);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding-bottom: 10px; /* Safe area */
+    z-index: 5;
+}
+
+.nav-item {
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.nav-item.active { color: var(--action-primary); font-weight: 600; }
