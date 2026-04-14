@@ -3,7 +3,7 @@
   "name": "RunnerPro - Rastreador de Corrida",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/5234/5234158.png",
+      "src": "capa.png",
       "type": "image/png",
       "sizes": "512x512"
     }
