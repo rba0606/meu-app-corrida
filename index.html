@@ -3,86 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RunnerPro - Sua Corrida Ao Vivo</title>
-    
+    <title>RunnerPro - Tracker de Corrida</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/5234/5234158.png">
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
-    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* Estilos e Variáveis Modernas */
+        :root {
+            --bg: #f4f4f7;
+            --card: #ffffff;
+            --text: #1c1c1e;
+            --text-dim: #8e8e93;
+            --accent: #007aff;
+            --highlight: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+            --danger: #ff453a;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #121212;
+                --card: #1c1c1e;
+                --text: #ffffff;
+                --text-dim: #a1a1a6;
+            }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, sans-serif; background-color: var(--bg); color: var(--text); overflow-x: hidden; }
+
+        .app-container { max-width: 430px; margin: 0 auto; padding: 20px 20px 100px; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .gps-status { font-size: 0.8rem; font-weight: bold; color: #32d74b; }
+
+        /* Estilo dos Cards */
+        .card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .card-main { background: var(--highlight); color: #000; }
+        
+        .label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; display: block; }
+        .card-main .label { color: rgba(0,0,0,0.6); }
+
+        .big-value { font-size: 3.5rem; font-weight: 800; display: inline-block; }
+        .unit { font-size: 1rem; font-weight: 600; margin-left: 5px; }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .stat-card { text-align: center; padding: 15px 5px; }
+        .stat-val { font-size: 1.1rem; font-weight: 700; display: block; }
+
+        /* Mapa e Gráfico */
+        #map { height: 200px; width: 100%; border-radius: 15px; margin-top: 10px; z-index: 1; }
+        .chart-box { height: 60px; margin-top: 10px; }
+
+        /* Botão de Ação */
+        .controls { position: fixed; bottom: 20px; left: 0; width: 100%; padding: 0 20px; display: flex; gap: 10px; z-index: 10; }
+        .btn { flex: 2; padding: 18px; border-radius: 15px; border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+        .btn-start { background: var(--accent); color: white; }
+        .btn-stop { background: var(--danger); color: white; }
+        .btn-sec { flex: 1; background: var(--card); color: var(--text); }
+    </style>
 </head>
 <body>
 
-    <div class="app-shell">
-        <header class="app-header">
-            <span class="time-sim">9:41</span>
-            <h1 class="app-title">Sua Corrida - Ao Vivo</h1>
-            <div class="status-group">
-                <span class="icon-signal">📶</span>
-                <span class="gps-status" id="gpsStatus">Aguardando GPS...</span>
-            </div>
+    <div class="app-container">
+        <header>
+            <h1>Sua Corrida</h1>
+            <span class="gps-status" id="gps-status">GPS PRONTO</span>
         </header>
 
-        <main class="app-content">
-            
-            <section class="card card-highlight">
-                <div class="card-header">
-                    <h2 class="card-label">Distância Percorrida</h2>
-                </div>
-                <div class="dist-container">
-                    <span class="dist-value" id="distValue">0.00</span>
-                    <span class="dist-unit">km</span>
-                </div>
-                <div class="chart-container">
-                    <canvas id="runChart"></canvas>
-                    <div class="chart-labels">
-                        <span>00:00</span>
-                        <span id="currentTimeLabel">00:00</span>
-                    </div>
-                </div>
-            </section>
+        <div class="card card-main">
+            <span class="label">Distância Percorrida</span>
+            <div>
+                <span class="big-value" id="dist">0.00</span>
+                <span class="unit">km</span>
+            </div>
+            <div class="chart-box">
+                <canvas id="miniChart"></canvas>
+            </div>
+        </div>
 
-            <section class="stats-grid">
-                <div class="card stat-card">
-                    <span class="stat-icon">⏱️</span>
-                    <span class="stat-label">Tempo</span>
-                    <span class="stat-value" id="timeValue">00:00:00</span>
-                </div>
-                <div class="card stat-card">
-                    <span class="stat-icon">⚡</span>
-                    <span class="stat-label">Ritmo Médio</span>
-                    <span class="stat-value" id="paceValue">0'00"</span>
-                    <span class="stat-unit">min/km</span>
-                </div>
-                <div class="card stat-card">
-                    <span class="stat-icon">🔥</span>
-                    <span class="stat-label">Calorias</span>
-                    <span class="stat-value" id="caloValue">0</span>
-                    <span class="stat-unit">kcal</span>
-                </div>
-            </section>
+        <div class="stats-grid">
+            <div class="card stat-card">
+                <span class="label">Tempo</span>
+                <span class="stat-val" id="time">00:00:00</span>
+            </div>
+            <div class="card stat-card">
+                <span class="label">Pace</span>
+                <span class="stat-val" id="pace">0'00"</span>
+            </div>
+            <div class="card stat-card">
+                <span class="label">Calorias</span>
+                <span class="stat-val">0</span>
+            </div>
+        </div>
 
-            <section class="card card-map">
-                <h2 class="card-label overlay-label">Mapa do Percurso</h2>
-                <div id="map"></div>
-            </section>
-        </main>
-
-        <footer class="app-actions">
-            <button class="btn btn-primary" id="btnAction">
-                <span class="icon-pause">⏸️</span> Pausar Atividade
-            </button>
-            <button class="btn btn-secondary">Ver Detalhes</button>
-        </footer>
-
-        <nav class="app-nav">
-            <a href="#" class="nav-item active">🔄 Resumo</a>
-            <a href="#" class="nav-item">🛤️ Percurso</a>
-            <a href="#" class="nav-item">👤 Perfil</a>
-        </nav>
+        <div class="card" style="padding: 10px;">
+            <span class="label" style="margin-left: 10px;">Percurso ao Vivo</span>
+            <div id="map"></div>
+        </div>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <script src="script.js"></script>
-</body>
-</html>
+    <div class="controls">
+        <button id="mainBtn" class="btn btn-start">Iniciar Corrida</button>
+        <button class="btn btn-sec">Histórico</button>
+    </div>
+
+    <script>
+        let isRunning = false;
+        let watchID, timerInterval;
+        let distance = 0, seconds = 0, lastCoords = null, path = [];
+
+        // Inicializar Mapa
+        const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-23.5505, -46.6333], 15);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+        let polyline = L.polyline([], { color: '#007aff', weight: 5 }).addTo(map);
+
+        // Inicializar Gráfico
+        const ctx = document.getElementById('miniChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: ['', '', '', '', ''], datasets: [{ data: [0,0,0,0,0], borderColor: 'rgba(0,0,0,0.2)', tension: 0.4, pointRadius: 0 }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: {display: false}, y: {display: false} }, plugins: {legend: {display: false}} }
+        });
+
+        function calcDist(l1, l2) {
+            const R = 6371;
+            const dLat = (l2.lat - l1.lat) * Math.PI / 180;
+            const dLon = (l2.lon - l1.lon) * Math.PI / 180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(l1.lat * Math.PI/180) * Math.cos(l2.lat * Math.PI/180) * Math.sin(dLon/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function updateGPS(pos) {
+            const { latitude: lat, longitude: lon } = pos.coords;
+            if (lastCoords) {
+                const d = calcDist(lastCoords, {lat, lon});
