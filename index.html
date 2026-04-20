@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RunnerPro - Histórico</title>
+    <title>RunnerPro - V2</title>
 
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -27,43 +25,40 @@
         .app-container { max-width: 430px; margin: 0 auto; padding: 20px 20px 100px; }
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         
-        /* Cards */
         .card { background: var(--card); border-radius: 24px; padding: 20px; margin-bottom: 15px; border: 1px solid #e5e5ea; }
         .card-main { background: var(--highlight); border: none; }
         .label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; margin-bottom: 5px; display: block; }
         .big-value { font-size: 3.5rem; font-weight: 900; letter-spacing: -2px; }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        #map { height: 180px; width: 100%; border-radius: 18px; z-index: 1; }
+        #map { height: 250px; width: 100%; border-radius: 18px; z-index: 1; }
 
-        /* Botões */
-        .controls { position: fixed; bottom: 0; left: 0; width: 100%; padding: 20px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); display: flex; gap: 10px; z-index: 10; }
-        .btn { flex: 2; padding: 18px; border-radius: 16px; border: none; font-size: 1rem; font-weight: bold; cursor: pointer; }
+        .controls { position: fixed; bottom: 0; left: 0; width: 100%; padding: 20px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); display: flex; gap: 10px; z-index: 10; border-top: 1px solid #eee; }
+        .btn { flex: 2; padding: 18px; border-radius: 16px; border: none; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-start { background: var(--accent); color: white; }
         .btn-stop { background: var(--danger); color: white; }
         .btn-sec { flex: 1; background: #e5e5ea; color: #000; }
 
-        /* Modal de Histórico */
+        /* Modal Histórico */
         #historyModal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg); z-index: 20; transform: translateY(100%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 20px; overflow-y: auto;
+            transition: transform 0.4s ease; padding: 20px; overflow-y: auto;
         }
         #historyModal.active { transform: translateY(0); }
         .history-item { 
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px; border-bottom: 1px solid #e5e5ea;
+            background: #f9f9f9; padding: 15px; border-radius: 15px; margin-bottom: 15px;
         }
-        .close-history { float: right; font-weight: bold; color: var(--accent); margin-bottom: 20px; }
+        .mini-map-container { height: 120px; width: 100%; background: #eee; margin-top: 10px; border-radius: 10px; pointer-events: none; }
+        .close-history { float: right; font-weight: bold; color: var(--accent); cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="app-container">
         <header>
-            <h1 style="font-weight: 800;">Correr</h1>
-            <span id="gps-status" style="color:#248a3d; font-size: 0.8rem; font-weight: bold;">📍 GPS ON</span>
+            <h1 style="font-weight: 800;">RunnerPro</h1>
+            <span id="gps-status" style="color:var(--text-dim); font-size: 0.8rem; font-weight: bold;">AGUARDANDO...</span>
         </header>
 
         <div class="card card-main">
@@ -77,8 +72,8 @@
                 <span id="time" style="font-size: 1.2rem; font-weight: 800;">00:00:00</span>
             </div>
             <div class="card">
-                <span class="label">Pace Médio</span>
-                <span id="pace" style="font-size: 1.2rem; font-weight: 800;">0'00"</span>
+                <span class="label">Status</span>
+                <span id="status-txt" style="font-size: 0.9rem; font-weight: 800;">Pronto</span>
             </div>
         </div>
 
@@ -87,10 +82,9 @@
 
     <div id="historyModal">
         <span class="close-history" onclick="toggleHistory()">Fechar</span>
-        <h2 style="margin-bottom: 20px;">Meu Histórico</h2>
-        <div id="historyList">
-            </div>
-        <button onclick="clearHistory()" style="margin-top: 20px; color: red; border: none; background: none; font-size: 0.8rem;">Limpar Tudo</button>
+        <h2 style="margin-bottom: 20px;">Atividades Recentes</h2>
+        <div id="historyList"></div>
+        <button onclick="clearHistory()" style="margin: 40px auto; display: block; color: red; border: none; background: none;">Limpar Tudo</button>
     </div>
 
     <div class="controls">
@@ -100,45 +94,90 @@
 
     <script>
         let isRunning = false;
-        let watchID, timerInterval;
+        let watchID, timerInterval, wakeLock = null;
         let distance = 0, seconds = 0, lastCoords = null;
+        let currentPath = []; // Para salvar as coordenadas
 
-        // Mapa
-        const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-23.5505, -46.6333], 16);
+        // Inicializar Mapa principal
+        const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([0,0], 2);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
         let polyline = L.polyline([], { color: '#007aff', weight: 6 }).addTo(map);
+
+        // Manter a tela ligada
+        async function toggleWakeLock(active) {
+            if (active && 'wakeLock' in navigator) {
+                try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
+            } else if (wakeLock) {
+                wakeLock.release();
+                wakeLock = null;
+            }
+        }
 
         function handleAction() {
             const btn = document.getElementById('mainBtn');
             if (!isRunning) {
-                // Iniciar
-                isRunning = true;
-                distance = 0; seconds = 0;
-                btn.innerText = "Parar e Salvar";
-                btn.className = "btn btn-stop";
-                startGPS();
-                startTimer();
+                startRace(btn);
             } else {
-                // Parar e Salvar
-                saveRun(distance.toFixed(2), document.getElementById('time').innerText);
-                location.reload(); 
+                stopRace(btn);
             }
+        }
+
+        function startRace(btn) {
+            isRunning = true;
+            distance = 0; seconds = 0; currentPath = [];
+            document.getElementById('dist').innerText = "0.00";
+            polyline.setLatLngs([]);
+            
+            btn.innerText = "Parar e Salvar";
+            btn.className = "btn btn-stop";
+            document.getElementById('status-txt').innerText = "Correndo...";
+            
+            toggleWakeLock(true);
+            startGPS();
+            startTimer();
+        }
+
+        function stopRace(btn) {
+            isRunning = false;
+            navigator.geolocation.clearWatch(watchID);
+            clearInterval(timerInterval);
+            toggleWakeLock(false);
+            
+            saveRun(distance.toFixed(2), document.getElementById('time').innerText, currentPath);
+            
+            btn.innerText = "Iniciar Corrida";
+            btn.className = "btn btn-start";
+            document.getElementById('status-txt').innerText = "Salvo!";
+            alert("Corrida salva com sucesso!");
         }
 
         function startGPS() {
             watchID = navigator.geolocation.watchPosition((pos) => {
-                const { latitude: lat, longitude: lon } = pos.coords;
+                const { latitude: lat, longitude: lon, accuracy } = pos.coords;
+                
+                // Ignora pontos com precisão ruim (mais de 30 metros)
+                if (accuracy > 30) return;
+
+                document.getElementById('gps-status').innerText = "📍 SINAL FORTE";
+
+                const newPoint = [lat, lon];
                 if (lastCoords) {
                     const d = calcDist(lastCoords, {lat, lon});
-                    if (d > 0.002) { 
+                    if (d > 0.005) { // Filtro de 5 metros para evitar "tremedeira" do GPS
                         distance += d;
                         document.getElementById('dist').innerText = distance.toFixed(2);
-                        polyline.addLatLng([lat, lon]);
-                        map.panTo([lat, lon]);
+                        currentPath.push(newPoint);
+                        polyline.addLatLng(newPoint);
+                        map.fitBounds(polyline.getBounds());
                     }
+                } else {
+                    currentPath.push(newPoint);
+                    map.setView(newPoint, 17);
                 }
                 lastCoords = {lat, lon};
-            }, null, { enableHighAccuracy: true });
+            }, (err) => {
+                document.getElementById('gps-status').innerText = "❌ ERRO GPS";
+            }, { enableHighAccuracy: true });
         }
 
         function startTimer() {
@@ -159,12 +198,11 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        // Lógica de Histórico
-        function saveRun(dist, time) {
-            if (parseFloat(dist) <= 0) return;
+        function saveRun(dist, time, path) {
+            if (parseFloat(dist) < 0.01) return;
             const runs = JSON.parse(localStorage.getItem('runs') || '[]');
-            const date = new Date().toLocaleDateString('pt-BR');
-            runs.unshift({ dist, time, date });
+            const date = new Date().toLocaleDateString('pt-BR', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+            runs.unshift({ dist, time, date, path });
             localStorage.setItem('runs', JSON.stringify(runs));
         }
 
@@ -177,22 +215,36 @@
         function renderHistory() {
             const list = document.getElementById('historyList');
             const runs = JSON.parse(localStorage.getItem('runs') || '[]');
-            list.innerHTML = runs.length ? '' : '<p style="color:gray">Nenhuma corrida salva.</p>';
-            runs.forEach(run => {
+            list.innerHTML = runs.length ? '' : '<p style="text-align:center; padding:20px;">Nenhuma corrida salva.</p>';
+            
+            runs.forEach((run, index) => {
+                const itemID = `map-mini-${index}`;
                 list.innerHTML += `
                     <div class="history-item">
-                        <div>
-                            <div style="font-weight:800; font-size:1.1rem">${run.dist} km</div>
-                            <div style="font-size:0.8rem; color:gray">${run.date}</div>
+                        <div style="display:flex; justify-content:space-between; align-items:center">
+                            <div>
+                                <div style="font-weight:800; font-size:1.2rem">${run.dist} km</div>
+                                <div style="font-size:0.75rem; color:gray">${run.date}</div>
+                            </div>
+                            <div style="font-weight:bold; color:var(--accent)">${run.time}</div>
                         </div>
-                        <div style="font-weight:bold">${run.time}</div>
+                        <div id="${itemID}" class="mini-map-container"></div>
                     </div>
                 `;
+                // Renderizar o mini mapa após o HTML ser inserido
+                setTimeout(() => {
+                    if (run.path && run.path.length > 0) {
+                        const miniMap = L.map(itemID, {zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false});
+                        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(miniMap);
+                        const p = L.polyline(run.path, {color: '#007aff', weight: 4}).addTo(miniMap);
+                        miniMap.fitBounds(p.getBounds(), {padding: [10, 10]});
+                    }
+                }, 100);
             });
         }
 
         function clearHistory() {
-            if(confirm("Apagar todas as corridas?")) {
+            if(confirm("Deseja apagar todo o histórico?")) {
                 localStorage.removeItem('runs');
                 renderHistory();
             }
